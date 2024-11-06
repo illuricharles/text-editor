@@ -1,8 +1,10 @@
 import { FaBold, FaCode, FaStrikethrough, FaUnderline } from "react-icons/fa6";
 import ToolBarButtons from "./ToolBarButtons";
 import { FaItalic } from "react-icons/fa";
-import { ChainedCommands, Editor } from "@tiptap/react";
+import { BubbleMenu, ChainedCommands, Editor } from "@tiptap/react";
 import { BiAlignLeft, BiAlignMiddle, BiAlignRight, BiImageAlt, BiListOl, BiListUl,  } from "react-icons/bi";
+import { LinkForm } from "./LinkForm";
+import { LinkEditForm } from "./LinkEditForm";
 // import { PiCodeBlockDuotone } from "react-icons/pi";
 
 interface ToolBarProps {
@@ -148,21 +150,49 @@ export default function ToolBar({editor, onImageSelect}: ToolBarProps) {
         }
     }
 
+    function onSubmitLinkForm(href: string) {
+
+    // cancelled
+    if (href === null) {
+      return
+    }
+
+    // empty
+    if (href === '') {
+      editor?.chain().focus().extendMarkRange('link').unsetLink().run()
+
+      return
+    }
+
+    // update link
+    editor?.chain().focus().extendMarkRange('link').setLink({ href })
+      .run()
+    }
+
     function getSelectedHeading(): HeadingTypes {
-        console.log("called")
         let result: HeadingTypes = 'p'
         if(editor?.isActive('heading', {level: 1})) result = 'h1'
         if(editor?.isActive('heading', {level: 2})) result = 'h2'
         if(editor?.isActive('heading', {level: 3})) result = 'h3'
         return result
     }
+
+    function getInitialLinkValue() {
+        const initialLink = editor?.getAttributes('link')
+        if(initialLink) return initialLink.href
+    }
     
-    return <div>
-        <select value={getSelectedHeading()} onChange={handleOnChangeHeading} className="p-1 outline">
+    return <div className="flex items-center justify-center">
+        <select value={getSelectedHeading()} onChange={handleOnChangeHeading} className="p-1 outline mr-1">
             {headingOptions.map(eachHeadingOption => {
                 return <option key={eachHeadingOption.task} value={eachHeadingOption.task}>{eachHeadingOption.value}</option>
             })}
         </select>
+        <LinkForm initialLinkValue={getInitialLinkValue()} onSubmitLinkForm={onSubmitLinkForm}/>
+        <BubbleMenu editor={editor} shouldShow={ ({editor}) => editor.isActive('link')}>
+
+            <LinkEditForm initialLinkValue={getInitialLinkValue()} onSubmitLinkForm={onSubmitLinkForm}/> 
+        </BubbleMenu>
         {toolBarOptions.map(eachOption => {
             return <ToolBarButtons
             onClick={() => handleOnClick(eachOption.task, {editor, onImageSelect})}

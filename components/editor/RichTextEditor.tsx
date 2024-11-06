@@ -5,7 +5,6 @@ import Paragraph from '@tiptap/extension-paragraph'
 import ToolBar from "./ToolBar"
 import Underline from "@tiptap/extension-underline"
 import Strike from "@tiptap/extension-strike"
-import CodeBlock from "@tiptap/extension-code-block"
 import Code from "@tiptap/extension-code"
 import Image from "@tiptap/extension-image"
 import BulletList from "@tiptap/extension-bullet-list"
@@ -17,6 +16,8 @@ import { common, createLowlight } from 'lowlight';
 import Placeholder from "@tiptap/extension-placeholder"
 import ImageGallery from "./ImageGallery"
 import Heading from '@tiptap/extension-heading'
+import Link from '@tiptap/extension-link'
+
 
 import { useState } from "react"
 
@@ -29,7 +30,14 @@ interface UploadedImagesProps {
 
 const extensions =[
   StarterKit.configure({
-    heading: false
+    heading: false,
+    paragraph:false,
+    strike: false,
+    code: false,
+    codeBlock:false,
+    bulletList:false,
+    orderedList: false,
+    listItem: false
   }),
   Underline, 
   Strike, 
@@ -38,7 +46,15 @@ const extensions =[
       class: 'text-lg'
     }
   }),
-  CodeBlock, 
+  Link.configure({
+    openOnClick: false,
+    autolink: false,
+    linkOnPaste: true,
+    HTMLAttributes: {
+      target: "_blank",
+      class: "text-blue-500 underline cursor-pointer"
+    }
+  }),
   Heading.configure({ levels: [1, 2,3] }).extend({
     levels: [1, 2,3],
     renderHTML({ node, HTMLAttributes }) {
@@ -46,9 +62,9 @@ const extensions =[
         ? node.attrs.level 
         : this.options.levels[0]
       const classes: {1: string, 2: string, 3: string} = {
-        1: 'text-4xl ',
-        2: 'text-3xl ',
-        3: 'text-2xl '
+        1: 'text-3xl ',
+        2: 'text-2xl ',
+        3: 'text-xl '
       }
       return [
         `h${level}`,
@@ -125,6 +141,15 @@ export default function RichTextEditor() {
         className=" flex-1"
       />
       </div>
+
+      <div className="p-2 text-right mb-2">
+        <button onClick={() => {
+          console.log(editor?.getHTML())
+        }}
+         className="text-white bg-black p-2 rounded">
+          Create New Post</button>
+      </div>
+
       <ImageGallery onClickSelect={onClickSelect} visible={showImageGallery} onClickClose={setShowImageGallery}/>
     </>
   )

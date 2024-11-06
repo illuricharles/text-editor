@@ -83,9 +83,9 @@ export default function ImageGallery({ visible, onClickClose, onClickSelect }: I
 
                     {uploadedImages.map(eachImage => {
                         return (
-                            <div key={eachImage.key} className="relative w-full h-full">
+                            <div key={eachImage.key} className="group relative w-full h-full">
                                 <Image src={eachImage.appUrl} alt="" width={1000} height={1000} className="w-full aspect-square object-cover" />
-                                <div className="absolute bottom-0  flex justify-center w-full">
+                                <div className="absolute bottom-0 hidden group-hover:flex justify-center w-full">
                                     <button onClick={() => onClickDeleteImage(eachImage.key)} className="bg-red-900 text-white w-full flex justify-center">
                                         <BiTrash size={25}/>
                                     </button>
