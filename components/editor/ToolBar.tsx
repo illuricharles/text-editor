@@ -6,7 +6,8 @@ import { BiAlignLeft, BiAlignMiddle, BiAlignRight, BiImageAlt, BiListOl, BiListU
 // import { PiCodeBlockDuotone } from "react-icons/pi";
 
 interface ToolBarProps {
-    editor: Editor | null
+    editor: Editor | null,
+    onImageSelect?():void
 }
 
 const toolBarOptions = [
@@ -73,14 +74,34 @@ const toolBarOptions = [
 
 ] as const
 
+const headingOptions = [
+    {
+        task:'p',
+        value: "Paragraph"
+    }, 
+    {
+        task: 'h1',
+        value: "Heading 1"
+    },
+    {
+        task: 'h2',
+        value: "Heading 2"
+    },
+    {
+        task: 'h3',
+        value: "Heading 3"
+    }
+] as const
+
 type TaskTypes = (typeof toolBarOptions)[number]['task']
+type HeadingTypes = (typeof headingOptions)[number]['task']
 
 function chainFunction({editor}: ToolBarProps, command: (chain: ChainedCommands) => ChainedCommands) {
     if(!editor) return
     return command(editor.chain().focus()).run()
 }
 
-function handleOnClick(task: TaskTypes, {editor}: ToolBarProps) {
+function handleOnClick(task: TaskTypes, {editor, onImageSelect}: ToolBarProps) {
     switch(task){
         case 'bold':
             return chainFunction({editor}, chain => chain.toggleBold())
@@ -104,14 +125,47 @@ function handleOnClick(task: TaskTypes, {editor}: ToolBarProps) {
             return chainFunction({editor}, chain => chain.toggleStrike())
         case "underline":
             return chainFunction({editor}, chain => chain.toggleUnderline())
+        case "image":
+            return onImageSelect && onImageSelect()
     }
 }
 
-export default function ToolBar({editor}: ToolBarProps) {
+
+export default function ToolBar({editor, onImageSelect}: ToolBarProps) {
+
+    function handleOnChangeHeading(e: React.ChangeEvent<HTMLSelectElement>) {
+        const {value} = e.target as {value: HeadingTypes}
+        console.log(value)
+        switch(value) {
+            case 'p': 
+                 return chainFunction({editor}, chain => chain.setParagraph())
+            case 'h1':
+                return chainFunction({editor}, chain => chain.setHeading({level: 1}))
+            case 'h2':
+                return chainFunction({editor}, chain => chain.setHeading({level: 2}))
+            case 'h3':
+                return chainFunction({editor}, chain => chain.setHeading({level: 3}))
+        }
+    }
+
+    function getSelectedHeading(): HeadingTypes {
+        console.log("called")
+        let result: HeadingTypes = 'p'
+        if(editor?.isActive('heading', {level: 1})) result = 'h1'
+        if(editor?.isActive('heading', {level: 2})) result = 'h2'
+        if(editor?.isActive('heading', {level: 3})) result = 'h3'
+        return result
+    }
+    
     return <div>
+        <select value={getSelectedHeading()} onChange={handleOnChangeHeading} className="p-1 outline">
+            {headingOptions.map(eachHeadingOption => {
+                return <option key={eachHeadingOption.task} value={eachHeadingOption.task}>{eachHeadingOption.value}</option>
+            })}
+        </select>
         {toolBarOptions.map(eachOption => {
             return <ToolBarButtons
-            onClick={() => handleOnClick(eachOption.task, {editor})}
+            onClick={() => handleOnClick(eachOption.task, {editor, onImageSelect})}
             key={eachOption.id} 
             active={editor?.isActive(eachOption.task) || editor?.isActive({textAlign: eachOption.task})}>
             {eachOption.icon}

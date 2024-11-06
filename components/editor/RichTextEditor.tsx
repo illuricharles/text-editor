@@ -1,6 +1,7 @@
 "use client"
-import {  EditorContent, useEditor } from "@tiptap/react"
+import {  EditorContent, mergeAttributes, useEditor } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
+import Paragraph from '@tiptap/extension-paragraph'
 import ToolBar from "./ToolBar"
 import Underline from "@tiptap/extension-underline"
 import Strike from "@tiptap/extension-strike"
@@ -14,13 +15,50 @@ import TextAlign from "@tiptap/extension-text-align"
 import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
 import { common, createLowlight } from 'lowlight';
 import Placeholder from "@tiptap/extension-placeholder"
+import ImageGallery from "./ImageGallery"
+import Heading from '@tiptap/extension-heading'
+
+import { useState } from "react"
+
+interface UploadedImagesProps {
+  url: string,
+  appUrl: string,
+  key: string
+}
 
 
 const extensions =[
-  StarterKit,
+  StarterKit.configure({
+    heading: false
+  }),
   Underline, 
   Strike, 
+  Paragraph.configure({
+    HTMLAttributes: {
+      class: 'text-lg'
+    }
+  }),
   CodeBlock, 
+  Heading.configure({ levels: [1, 2,3] }).extend({
+    levels: [1, 2,3],
+    renderHTML({ node, HTMLAttributes }) {
+      const level = this.options.levels.includes(node.attrs.level) 
+        ? node.attrs.level 
+        : this.options.levels[0]
+      const classes: {1: string, 2: string, 3: string} = {
+        1: 'text-4xl ',
+        2: 'text-3xl ',
+        3: 'text-2xl '
+      }
+      return [
+        `h${level}`,
+        mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
+          class: `${classes[level as 1 | 2 | 3]}`,
+        }),
+        0,
+      ]
+    },
+  }),
   CodeBlockLowlight.configure({
     lowlight: createLowlight(common)
 }),
@@ -29,7 +67,12 @@ const extensions =[
       class: "bg-pink-200"
     }
   }), 
-  Image, 
+  Image.configure({
+    inline: false,
+    HTMLAttributes: {
+      class: "w-60 aspect-square rounded m-auto mt-2"
+    }
+  }), 
   BulletList.configure({
     HTMLAttributes: {
       class: "list-disc ml-3 w-fit "
@@ -51,6 +94,7 @@ Placeholder.configure({
 ]
 
 export default function RichTextEditor() {
+  const [showImageGallery, setShowImageGallery] = useState(false)
   const editor = useEditor({
     extensions,
     content: "",
@@ -58,21 +102,32 @@ export default function RichTextEditor() {
       attributes: {
         class: "outline-none" 
       }
-    }
+    },
+    immediatelyRender: false
   })
+
+  function onClickSelect(item: UploadedImagesProps) {
+    console.log(item)
+    editor?.chain().focus().setImage({src: item.url, alt: ""}).run()
+  }
+
   return (
-    <div className="min-h-screen flex flex-col gap-y-5 ">
-      
-      <div className="w-full text-center sticky top-0 bg-white z-50">
-        <ToolBar editor={editor} />
+    <>
+    
+      <div className="min-h-screen flex flex-col gap-y-5 ">
+        
+        <div className="w-full text-center sticky top-0 bg-white z-50">
+          <ToolBar editor={editor} onImageSelect={() => setShowImageGallery(true)}/>
+        </div>
+
+      <EditorContent
+        editor={editor}
+        className=" flex-1"
+      />
       </div>
-
-    <EditorContent
-      editor={editor}
-      className=" flex-1"
-    />
-</div>
-
-
+      <ImageGallery onClickSelect={onClickSelect} visible={showImageGallery} onClickClose={setShowImageGallery}/>
+    </>
   )
 }
+
+
